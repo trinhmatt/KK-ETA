@@ -1,0 +1,205 @@
+
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#map {
+  height: 500px;
+  width: 100vw;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+
+a:hover {
+  color: gray;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #ff917d !important;
+}
+
+.MuiButton-containedSecondary {
+  background-color: #86f79d !important;
+  color: black !important;
+}
+
+.MuiAlert-standardInfo {
+  color: white !important;
+  background: rgb(255,176,247) !important;
+  background: linear-gradient(104deg, rgba(255,176,247,1) 0%, rgba(0,204,255,1) 100%, rgba(255,163,233,1) 100%) !important;
+}
+
+.MuiAlert-standardSuccess {
+  color: white !important;
+  background: rgb(255,180,49) !important;
+  background: linear-gradient(104deg, rgba(255,180,49,1) 0%, rgba(255,163,233,1) 70%, rgba(0,204,255,1) 100%) !important;
+}
+
+.MuiAlert-standardError {
+  color: white !important;
+  background: rgb(171,255,105) !important;
+  background: linear-gradient(104deg, rgba(171,255,105,1) 0%, rgba(255,180,49,1) 47%, rgba(255,163,233,1) 100%) !important;
+}
+
+input#addy {
+  width: 220px !important;
+  border: 2px !important;
+ 
+} 
+
+input#bufferToAdd {
+  width: 80px !important;
+  border: 1px solid rgb(82, 255, 113) !important;
+}
+
+input#bufferToSubtract {
+  width: 100px !important;
+  border: 1px solid rgb(255, 82, 96) !important;
+}
+
+button#subbtn {
+  background-color: #ff5260;
+  color: white;
+}
+
+button#addbtn {
+  background-color: #52ff71;
+  color: white;
+}
+
+button#donebtn {
+  background-color: #3de2ff;
+  color: white;
+}
+
+button#canbtn {
+  background-color: #ff3d67;
+  color: white;
+}
+
+button#routebtn {
+  background-color: #f2466c;
+  color: white;
+  padding: 4.7%;
+}
+
+button#rebtn {
+  background-color: #ffbd59;
+  color: white;
+}
+
+button#signoutbtn {
+  background-color:lightslategray;
+  color:white;
+  border: 2px solid;
+  margin-left: 2%;
+}
+
+button:disabled {
+  background-color: grey !important;
+}
+
+button#backbtn {
+  color: white;
+  margin: -2%;
+}
+
+button#startbtn {
+  color: white;
+  background-color: #67d67b;
+}
+
+input#homeinput {
+  background-color: white;
+  color: black;
+  text-align: center;
+}
+
+#logininput {
+  background-color: white;
+  color: black;
+  border: 2px dashed;
+}
+
+#pwinput {
+  background-color: white;
+  color: black;
+  border: 2px dashed;
+}
+
+button#etabtn {
+  background-color: white;
+}
+
+button#loginbtn {
+  background: rgb(123,235,228);
+  background: linear-gradient(104deg, rgba(123,235,228,1) 18%, rgba(255,163,233,1) 47%, rgba(255,180,49,1) 100%); 
+}
+
+a:visited {
+  color: black;
+}
+
+#ratebox {
+  background-color: black !important;
+}
+
+#commentbox {
+  width: 70vw;
+  color: white;
+}
+
+#homebg {
+  background-image: url('https://data.whicdn.com/images/238869064/original.gif');
+  background-size: contain;
+  overflow: auto;
+}
+
+#expbg {
+  background-image: url('https://i.gifer.com/9Sg1.gif');
+  background-size: contain;
+  overflow: auto;
+}
+
+#centerstyle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#backdrop {
+  z-index:auto;
+  color: '#fff';
+}
+
+#upper {
+  text-transform: uppercase;
+  font-size: large;
+}
+
+#accordionstyle {
+  background-color: transparent;
+  border: transparent;
+}
+
+#rrbtn {
+  background-color: rgb(245, 61, 98);
+  color: white;
+}
+
+#temp {
+  background-color: rgb(108, 82, 253);
+  color: white;
+}
