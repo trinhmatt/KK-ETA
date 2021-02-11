@@ -14,7 +14,9 @@ App built to track online orders and optimize delivery routes
  * Google Sheets API 
  * Google Maps API
  * Deployed on AWS Amplify 
- 
+
+
+*This repo is cloned from a private repo with sensitive code removed and is meant for portfolio purposes only*
 
 
 
