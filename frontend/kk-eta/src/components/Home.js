@@ -1,6 +1,5 @@
 import React from "react";
 import { withRouter } from "react-router";
-import database from "../firebase/firebase";
 
 // style imports
 import cx from 'clsx';
@@ -71,7 +70,8 @@ class Home extends React.Component {
 
   handleEnter = (e) => {
     if (e.key === 'Enter') {
-      this.findOrderEta();
+      this.props.history.push(`/m/${this.state.orderNum}`)
+      //this.findOrderEta();
     }
   }
 
@@ -81,171 +81,13 @@ class Home extends React.Component {
     this.setState({ orderNum, errMsg: "" });
   }
 
-  findOrder = (region) => {
-
-    return new Promise((resolve, reject) => {
-      let returnObj = {
-        found: false,
-        orderData: {}
-      };
-
-      database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/${region}`).once("value")
-        .then((snapshot) => {
-
-          const orders = snapshot.val();
-
-          const orderNum = parseInt(this.state.orderNum);
-
-
-          if (orders !== null) {
-
-            for (let i = 0; i < orders.length; ++i) {
-              if (orders[i].orderNumber === orderNum) {
-
-                returnObj.found = true;
-                returnObj.orderData = orders[i];
-
-                const firstName = orders[i].fullName.substring(0, orders[i].fullName.indexOf(" "));
-                returnObj.orderData.fullName = firstName;
-
-              }
-            }
-          }
-
-          resolve(returnObj);
-        })
-    })
-  }
-
-  findOrderEta = () => {
-
-    //Error handling
-    if (isNaN(parseInt(this.state.orderNum))) {
-      this.setState({ errMsg: "Error: Please enter a valid number!", orderNum: "" })
-    } else {
-
-      //Check if order is done (i.e. in completed sheet)
-      database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/completed`).once("value")
-        .then((snapshot) => {
-          const completedOrders = snapshot.val();
-          let orderData = {};
-
-          if (!!completedOrders[this.state.orderNum]) {
-            orderData = {
-              completed: completedOrders[this.state.orderNum].status,
-              ...completedOrders[this.state.orderNum]
-            }
-            console.log(orderData)
-            orderData.fullName = orderData.fullName.substring(0, orderData.fullName.indexOf(" "));
-
-            this.props.history.push({ pathname: `/a/${this.state.orderNum}`, state: { orderData } });
-
-          } else {
-
-            //If not in completed, check if it is an express order
-            //Check west first 
-            database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/exp_west`).once("value")
-              .then((snapshot) => {
-                const orders = snapshot.val();
-
-                if (!!orders[this.state.orderNum]) {
-                  this.props.history.push({
-                    pathname: `/${this.state.orderNum}`,
-                    state: { data: orders[this.state.orderNum] }
-                  })
-                } else {
-                  //Check east 
-                  database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/exp_east`).once("value")
-                    .then((snapshot) => {
-                      const orders = snapshot.val();
-
-                      if (!!orders[this.state.orderNum]) {
-                        this.props.history.push({
-                          pathname: `/${this.state.orderNum}`,
-                          state: { data: orders[this.state.orderNum] }
-                        })
-                      }
-
-                    })
-                }
-              })
-
-
-            //If not express, check if it is a main order 
-            database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/allOrders`).once("value")
-              .then((snapshot) => {
-
-                const orders = snapshot.val();
-                let orderObj = {
-                  fullName: "",
-                  orderNum: 0,
-                  eta: "",
-                  completed: "",
-                  status: ""
-                }
-
-
-                //Check if orders is in the list for all of today's orders
-                if (!orders[this.state.orderNum]) {
-
-                  this.setState({ errMsg: "Order not found, make sure the number is correct" });
-
-                  //If it isn't processed show the order status
-                  // } else if (orders[this.state.orderNum].status !== "Processed") {
-                  //   this.setState({orderStatus: `Order Status: ${orderObj.status}`})
-                } else {
-
-                  orderObj = orders[this.state.orderNum];
-                  orderObj.fullName = orderObj.fullName.substring(0, orderObj.fullName.indexOf(" "));
-
-                  //Check for east orders
-                  this.findOrder("east")
-                    .then((order) => {
-
-                      //If nothing, check west
-                      if (!order.found) {
-
-                        this.findOrder("west")
-                          .then((returnObj) => {
-
-                            //Need this in case order is not in east or west 
-                            let regionCode = "a";
-
-                            if (returnObj.found) {
-                              regionCode = "w";
-                              orderObj = returnObj.orderData;
-                            }
-
-                            this.props.history.push({ pathname: `/${regionCode}/${this.state.orderNum}`, state: { orderData: orderObj } });
-
-                          }).catch((err) => console.log(err));
-                      } else {
-                        orderObj = order.orderData;
-                        this.props.history.push({ pathname: `/e/${this.state.orderNum}`, state: { orderData: orderObj } });
-                      }
-                    })
-                    .catch((err) => console.log(err))
-
-
-
-
-
-                }
-              })
-          }
-        })
-
-
-    }
-  }
-
   render() {
     return (
       <div >
         <HomeBox
           ordernum={this.state.orderNum}
           change={this.orderNumChange}
-          click={this.findOrderEta}
+          click={() => this.props.history.push(`/m/${this.state.orderNum}`)}
           err={this.state.errMsg}
           enter={this.handleEnter}
         />

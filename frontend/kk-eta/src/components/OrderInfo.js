@@ -211,7 +211,7 @@ function OrderInfoBox({ name, status, eta, err, done, prevdef, ratingbool, ratin
                 </CardActions>
               </Box>)
               :
-              (<div>
+              (<div style={{zIndex: "1", marginTop: "25vh", width: "100vw"}}>
                 <Typography className={classes.errmsg} variant={'overline'}>
                   {err}
                 </Typography>
@@ -242,89 +242,7 @@ class OrderInfo extends React.Component {
 
     //Set scroll to top of page
     window.scrollTo(0, 0);
-
-    //Check if they came from the home page or just entered the route
-
-    //If they came from homepage, props will have location object
-    if (!!this.props.location.state) {
-
-      const orderData = this.props.location.state.orderData;
-      let isDone = false;
-      let customMsg = "";
-      let newStatus = "";
-
-      
-      //Custom messages based on status of orders in allOrders
-      //Check if order is shipping
-      if (orderData.isShipping) {
-        if (orderData.status === 'Processed') {
-          customMsg = 'Your order is processed and will be fulfilled by Canada Post';
-        }
-        else if (orderData.status === 'Awaiting ID') {
-          customMsg = 'Please refer to your invoice for further instructions';
-        }
-        else if (orderData.status === 'Awaiting EMT') {
-          customMsg = `Don't forget to send in your EMT for $${orderData.orderTotal} before 3:30PM to ensure Canada Post receives your order`;
-        }
-        else if (orderData.status === 'Check back later') {
-          customMsg = 'Our shipping cut-off is now 3:30PM.\nPlease check back around 1PM for the status of your order';
-        }
-        else {
-          customMsg = 'We are processing your order. Please check back later.';
-        }
-      } else {
-        if (orderData.status === 'Processed') {
-          //Map is divided, ETA is available
-          if (!!orderData.eta && orderData.eta.length > 0) {
-            customMsg = `Don't forget to rate your driver after you've received your order!`;
-          }
-          //Map is divided, but drivers have not started route
-          else if (!!orderData.eta) {
-            customMsg = 'Your driver is picking up your order. Please check back shortly!';
-          } else {
-            customMsg = 'Your order is processed.\nPlease check back around 4:30PM for an ETA.';
-          }
-
-        }
-        else if (orderData.status === 'Awaiting ID') {
-          customMsg = 'Please refer to your invoice for further instructions';
-        }
-        else if (orderData.status === 'Awaiting EMT') {
-          customMsg = `Don't forget to send in your EMT for $${orderData.orderTotal} before 3:30PM to ensure you receive your order today`;
-        }
-        else if (orderData.status === 'Check back later') {
-          customMsg = 'Our delivery cut-off is now 3:30PM.\nPlease check back around 1PM for the status of your order';
-        }
-        else {
-          customMsg = 'We are processing your order. Please check back later.';
-        }
-      }
-
-
-      //If order is completed, load the driver review sheet
-      if (!!orderData.completed && orderData.completed.length > 0) {
-        isDone = true;
-
-        if (orderData.completed === 'done') {
-          customMsg = 'Thank you for ordering with us, hope to see you soon :)';
-          newStatus = 'done';
-        }
-        else if (orderData.completed === 'redeliver') {
-          customMsg = 'Your order will be out again tomorrow, see you soon :)';
-          newStatus = 'redeliver';
-        }
-        else if (orderData.completed === 'cancel') {
-          customMsg = 'Sorry your order has been cancelled. Hope to see you soon :)';
-          newStatus = 'cancel';
-        }
-
-        this.loadSheet(orderData.driver.toLowerCase());
-      }
-      this.setState({ isDone, orderData, customMsg, newStatus })
-    } else {
-      //If they refresh the page (not coming from home)
-      this.findOrderEta();
-    }
+    this.findOrderEta();
   }
 
   loadSheet = async (title) => {
@@ -455,8 +373,9 @@ class OrderInfo extends React.Component {
 
                 //Check if orders is in the list for all of today's orders
                 if (!orders[this.props.match.params.orderNum]) {
+
                   //Order does not exist
-                  this.setState({ errMsg: "Sorry something went wrong. Please contact check your order# or contact our office!" });
+                  this.setState({ errMsg: "Sorry something went wrong. Please check your order# or contact our office!" });
 
                 } else {
                   //orderObj = allOrders object
@@ -510,91 +429,7 @@ class OrderInfo extends React.Component {
                     }
                   }
 
-
-                  //Check if the order is in the region specified in route
-                  //If it isn't set state variable to the order version found in allOrders (no eta)
-                  if (this.props.match.params.region === "e") {
-
-                    this.findOrder("east")
-                      .then((order) => {
-
-                        if (order.found) {
-                          //Order is complete
-                          if (order.orderData.completed.length > 0) {
-                            isDone = true;
-
-                            //Custom messages to customer for order completion
-                            if (order.orderData.completed === 'done') {
-                              customMsg = 'Thank you for ordering with us, hope to see you soon :)';
-                              newStatus = 'done';
-                            }
-                            else if (order.orderData.completed === 'redeliver') {
-                              customMsg = 'Your order will be out again tomorrow, see you soon :)';
-                              newStatus = 'redeliver';
-                            }
-                            else if (order.orderData.completed === 'cancel') {
-                              customMsg = 'Sorry your order has been cancelled. Hope to see you soon :)';
-                              newStatus = 'cancel';
-                            }
-
-                            this.loadSheet(order.orderData.driver.toLowerCase());
-                          }
-
-                          orderObj = order.orderData;
-                        }
-
-                        this.setState({ orderData: orderObj, isDone, customMsg, newStatus });
-
-                      }).catch(err => console.log(err))
-
-                  } else if (this.props.match.params.region === "w") {
-
-                    this.findOrder("west")
-                      .then((order) => {
-
-                        if (order.found) {
-
-                          if (order.orderData.completed.length > 0) {
-                            isDone = true;
-
-                            //Custom messages to customer for order completion
-                            if (order.orderData.completed === 'done') {
-                              customMsg = 'Thank you for ordering with us, hope to see you soon :)';
-                              newStatus = 'done';
-                            }
-                            else if (order.orderData.completed === 'redeliver') {
-                              customMsg = 'Your order will be out again tomorrow, see you soon :)';
-                              newStatus = 'redeliver';
-                            }
-                            else if (order.orderData.completed === 'cancel') {
-                              customMsg = 'Sorry your order has been cancelled. Hope to see you soon :)';
-                              newStatus = 'cancel';
-                            }
-
-                            this.loadSheet(order.orderData.driver.toLowerCase());
-                          }
-
-                          orderObj = order.orderData;
-                        }
-
-                        //Map is divided, ETA is available
-                        if (order.orderData.eta.length > 0) {
-                          customMsg = `Don't forget to rate your driver after you've received your order!`;
-                        }
-                        //Map is divided, but drivers have not started route
-                        else {
-                          customMsg = 'Your driver is picking up your order. Please check back shortly!';
-                        }
-
-                        this.setState({ orderData: orderObj, isDone, customMsg, newStatus });
-
-                      }).catch(err => console.log(err))
-
-                    //If "a", search in both
-                    //This is in case a customer checks before routes are added and just refreshes the page
-                  } else if (this.props.match.params.region === "a") {
-                    
-                    this.findOrder("east")
+                  this.findOrder("east")
                       .then((order) => {
 
                         if (order.found) {
@@ -619,7 +454,7 @@ class OrderInfo extends React.Component {
                                 }
 
                                 orderObj = order.orderData;
-                              }
+                              } 
 
                               this.setState({ orderData: orderObj, isDone, customMsg, newStatus });
 
@@ -627,10 +462,6 @@ class OrderInfo extends React.Component {
                         }
 
                       }).catch(err => console.log(err))
-
-                  } else {
-                    this.setState({ errMsg: "Something went wrong, go back to the homepage and search again." });
-                  }
 
                 }
               })
