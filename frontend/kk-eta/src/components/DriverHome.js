@@ -793,13 +793,8 @@ class DriverHome extends React.Component {
                 })
               } else {
 
-                //Needed for reroute 
-                //If origin is not default, filter out the waypoint from the list 
-                if (origin !== "5941 Leslie St, Toronto, ON M2H 1J8") {
-                  reqBody.waypoints = reqBody.waypoints.filter((waypoint) => {
-                    return waypoint.location !== origin;
-                  })
-                }
+                let orderedCustObjs = [];
+                let totalDuration = 0;
 
                 //If no extra orders, generate a single route
                 const directionsService = new google.maps.DirectionsService();
@@ -811,25 +806,39 @@ class DriverHome extends React.Component {
                   supressMarkers: true,
                   preserveViewport: true
                 }
-                var map = new google.maps.Map(this.map.current, mapOptions);
+
+                //Needed for reroute 
+                //If origin is not default, filter out the waypoint from the list and grab first ETA
+                if (origin !== "5941 Leslie St, Toronto, ON M2H 1J8") {
+
+                  reqBody.waypoints = reqBody.waypoints.filter((waypoint) => {
+                    return waypoint.location !== origin;
+                  })
+
+                  let firstOrder;
+
+                  for (let i = 0; i < processedList.length; i++) {
+                    if (processedList[i].address === origin) {  
+                      firstOrder = processedList[i];
+                    }
+                  }
+
+                  this.reRouteFirstETA(directionsService, firstOrder)
+                  .then( (order) => {
+                    orderedCustObjs.push(order)
+                  })
+                  .catch( err => console.log(err));
+
+                  processedList = processedList.filter( order => order.address !== origin);
+                }
+
+                
+
+                let map = new google.maps.Map(this.map.current, mapOptions);
                 directionsRenderer.setMap(map);
 
                 directionsService.route(reqBody, (result, status) => {
                   if (status === "OK") {
-
-                    let orderedCustObjs = [];
-                    let totalDuration = 0;
-
-                    if (origin !== "5941 Leslie St, Toronto, ON M2H 1J8") {
-                      for (let i = 0; i < processedList.length; i++) {
-                        if (processedList[i].address === origin) {
-                          orderedCustObjs.push(processedList[i]);
-                        }
-                      }
-                      processedList = processedList.filter( order => order.address !== origin);
-                    }
-
-
 
                     for (let i = 0; i < result.routes[0].waypoint_order.length; ++i) {
 
@@ -852,12 +861,15 @@ class DriverHome extends React.Component {
                     }
 
                     for (var i = 0; i < result.routes[0].legs.length; i++) {
+
                       let orderNumStr;
+
                       if (origin !== this.state.defaultDest) {
                         orderNumStr = orderedCustObjs[i].orderNumber.toString()
                       } else if (orderedCustObjs[i - 1]) {
                         orderNumStr = orderedCustObjs[i - 1].orderNumber.toString()
                       }
+
                       const infoBoxContent = `${result.routes[0].legs[i].start_address}<br>`;
                       let markerletter = "A".charCodeAt(0);
                       markerletter += i;
@@ -891,6 +903,38 @@ class DriverHome extends React.Component {
             })
         })
       )
+    })
+  }
+
+  reRouteFirstETA = (directionsService, order) => {
+    return new Promise( (resolve, reject) => {
+      //Need to get ETA for first order
+      const reRouteRequest = {
+        origin: this.state.defaultDest,
+        destination: order.address,
+        avoidTolls: true,
+        travelMode: "DRIVING",
+        drivingOptions: {
+          departureTime: new Date(Date.now()),  // for the time N milliseconds from now.
+          trafficModel: 'bestguess'
+        }
+      }
+
+      directionsService.route(reRouteRequest, (result, status) => {
+        if (status === "OK") {
+          const geoString = `geo:${result.routes[0].legs[0].end_location.lat()},${result.routes[0].legs[0].end_location.lng()}`;
+          order.lat = result.routes[0].legs[0].end_location.lat();
+          order.lng = result.routes[0].legs[0].end_location.lng();
+          order.geoString = geoString;
+          order.formattedTime = result.routes[0].legs[0].duration.value;
+
+          resolve(order);
+
+        } else {
+          reject("request failed")
+        }
+        
+      })
     })
   }
 
@@ -1064,50 +1108,46 @@ class DriverHome extends React.Component {
 
     //Update order to show in array
     const orderToShow = this.state.orderToShow + 1;
-
+    console.log(orderData);
     const completedData = {
       date: dayjs().format("DD/MM/YYYY"),
       orderNumber: orderData.orderNumber,
       fullName: orderData.fullName,
       driver: orderData.driver,
-      completed: orderData.status
+      completed: orderData.status,
+      eta: orderData.eta,
+      endTime: dayjs().format('hh:mm A')
     };
 
-    this.updateOrderInSheet(orderData)
-      .then(() => {
+    //Update ordersheet and completed sheet
+    Promise.all([this.updateOrderInSheet(orderData), this.addToCompletedSheet(completedData)]).then( () => {
 
-        this.addToCompletedSheet(completedData)
+      //If not on the last order, display the next one and reset the buffer
+      if (orderToShow < this.state.allCustomerCards.length) {
+
+        database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/routeInfo/${this.state.dir}`).update({ buffer: 0, currentOrder: orderToShow })
           .then(() => {
 
-            //If not on the last order, display the next one and reset the buffer
-            if (orderToShow < this.state.allCustomerCards.length) {
-              database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/routeInfo/${this.state.dir}`).update({ buffer: 0, currentOrder: orderToShow })
-                .then(() => {
-
-                  //Recalculate ETA for remaining orders
-                  this.setState({ orderToShow }, () => this.startRoute());
-
-                })
-            } else {
-
-              //If route is complete, reset database values
-              database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/routeInfo/${this.state.dir}`).update({
-                buffer: 0,
-                currentOrder: 0,
-                routeOrder: [],
-                routeTime: "",
-                lastDest: "",
-                routeStarted: false
-              })
-                .then(() => {
-                  this.setState({ orderToShow, routeCompleted: true })
-                })
-            }
+            //Recalculate ETA for remaining orders
+            this.setState({ orderToShow }, () => this.startRoute());
 
           })
-          .catch(err => console.log(err));
+      } else {
 
-      });
+        //If route is complete, reset database values
+        database.ref(`${process.env.REACT_APP_SPREADSHEET_ID}/routeInfo/${this.state.dir}`).update({
+          buffer: 0,
+          currentOrder: 0,
+          routeOrder: [],
+          routeTime: "",
+          lastDest: "",
+          routeStarted: false
+        })
+          .then(() => {
+            this.setState({ orderToShow, routeCompleted: true })
+          })
+      }
+    })
   }
 
   addBuffer = () => {
