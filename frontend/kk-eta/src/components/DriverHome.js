@@ -299,7 +299,7 @@ class DriverHome extends React.Component {
       orderList: [],
       startTime: "",
       lastDest: "",
-      defaultDest: "5941 Leslie St, Toronto, ON M2H 1J8",
+      defaultDest: "290 Bremner Blvd, Toronto, ON M5V 3L9",
       currentBuffer: 0,
       orderToShow: 0,
       startDisplay: "none",
